@@ -13,7 +13,21 @@ from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 
 from .api_worker import BadRequest, ServerError, UnexpectedError, application_tester
-from .const import CONFIG_CLIEND_SECRET, CONFIG_CLIENT_ID, DOMAIN, OPTION_ADJUSTED_DAYS, OPTION_FORECAST_ENABLED
+from .const import (
+    CONFIG_CLIEND_SECRET,
+    CONFIG_CLIENT_ID,
+    DOMAIN,
+    OPTION_ADJUSTED_DAYS,
+    OPTION_FORECAST_ENABLED,
+    OPTION_SOURCE_MODE,
+    OPTION_FALLBACK_STRATEGY,
+    OPTION_DEFAULT_TODAY_COLOR,
+    OPTION_DEFAULT_TOMORROW_COLOR,
+    OPTION_LOCAL_TODAY_ENTITY,
+    OPTION_LOCAL_TOMORROW_ENTITY,
+    SOURCE_MODE_AUTO,
+    FALLBACK_UNKNOWN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,6 +37,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONFIG_CLIENT_ID): str,
         vol.Required(CONFIG_CLIEND_SECRET): str,
         vol.Optional(OPTION_FORECAST_ENABLED, default=False): bool,
+        vol.Optional(OPTION_SOURCE_MODE, default=SOURCE_MODE_AUTO): str,
     }
 )
 
@@ -36,14 +51,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Handle the initial step."""
-        # No input
         if user_input is None:
             return self.async_show_form(
-                step_id="user", data_schema=STEP_USER_DATA_SCHEMA
+                step_id="user",
+                data_schema=STEP_USER_DATA_SCHEMA,
             )
-        # Validate input
+
         await self.async_set_unique_id(f"{DOMAIN}_{user_input[CONFIG_CLIENT_ID]}")
         self._abort_if_unique_id_configured()
+
         errors = {}
         try:
             client_id = user_input[CONFIG_CLIENT_ID]
@@ -53,7 +69,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
         except RequestException as request_exception:
             _LOGGER.error(
-                "Application validation failed: network error: %s", request_exception
+                "Application validation failed: network error: %s",
+                request_exception,
             )
             errors["base"] = "network_error"
         except OAuth2Error as oauth_error:
@@ -61,15 +78,20 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors["base"] = "oauth_error"
         except BadRequest as http_error:
             _LOGGER.error(
-                "Application validation failed: bad request error: %s", http_error
+                "Application validation failed: bad request error: %s",
+                http_error,
             )
             errors["base"] = "http_client_error"
         except ServerError as http_error:
-            _LOGGER.error("Application validation failed: server error: %s", http_error)
+            _LOGGER.error(
+                "Application validation failed: server error: %s",
+                http_error,
+            )
             errors["base"] = "http_server_error"
         except UnexpectedError as http_error:
             _LOGGER.error(
-                "Application validation failed: unexpected error: %s", http_error
+                "Application validation failed: unexpected error: %s",
+                http_error,
             )
             errors["base"] = "http_unexpected_error"
         else:
@@ -80,12 +102,24 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONFIG_CLIEND_SECRET: user_input[CONFIG_CLIEND_SECRET],
                 },
                 options={
-                    OPTION_FORECAST_ENABLED: user_input.get(OPTION_FORECAST_ENABLED, False),
+                    OPTION_FORECAST_ENABLED: user_input.get(
+                        OPTION_FORECAST_ENABLED, False
+                    ),
+                    OPTION_SOURCE_MODE: user_input.get(
+                        OPTION_SOURCE_MODE, SOURCE_MODE_AUTO
+                    ),
+                    OPTION_FALLBACK_STRATEGY: FALLBACK_UNKNOWN,
+                    OPTION_DEFAULT_TODAY_COLOR: "unknown",
+                    OPTION_DEFAULT_TOMORROW_COLOR: "unknown",
+                    OPTION_LOCAL_TODAY_ENTITY: "",
+                    OPTION_LOCAL_TOMORROW_ENTITY: "",
                 },
             )
-        # Show errors
+
         return self.async_show_form(
-            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+            step_id="user",
+            data_schema=STEP_USER_DATA_SCHEMA,
+            errors=errors,
         )
 
     @staticmethod
@@ -98,7 +132,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    """Handles the options of a Linky TIC connection."""
+    """Handle options for the integration."""
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -113,12 +147,52 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 {
                     vol.Required(
                         OPTION_ADJUSTED_DAYS,
-                        default=self.config_entry.options.get(OPTION_ADJUSTED_DAYS, False),
+                        default=self.config_entry.options.get(
+                            OPTION_ADJUSTED_DAYS, False
+                        ),
                     ): bool,
                     vol.Required(
                         OPTION_FORECAST_ENABLED,
-                        default=self.config_entry.options.get(OPTION_FORECAST_ENABLED, False),
+                        default=self.config_entry.options.get(
+                            OPTION_FORECAST_ENABLED, False
+                        ),
                     ): bool,
+                    vol.Required(
+                        OPTION_SOURCE_MODE,
+                        default=self.config_entry.options.get(
+                            OPTION_SOURCE_MODE, SOURCE_MODE_AUTO
+                        ),
+                    ): str,
+                    vol.Required(
+                        OPTION_FALLBACK_STRATEGY,
+                        default=self.config_entry.options.get(
+                            OPTION_FALLBACK_STRATEGY, FALLBACK_UNKNOWN
+                        ),
+                    ): str,
+                    vol.Required(
+                        OPTION_DEFAULT_TODAY_COLOR,
+                        default=self.config_entry.options.get(
+                            OPTION_DEFAULT_TODAY_COLOR, "unknown"
+                        ),
+                    ): str,
+                    vol.Required(
+                        OPTION_DEFAULT_TOMORROW_COLOR,
+                        default=self.config_entry.options.get(
+                            OPTION_DEFAULT_TOMORROW_COLOR, "unknown"
+                        ),
+                    ): str,
+                    vol.Optional(
+                        OPTION_LOCAL_TODAY_ENTITY,
+                        default=self.config_entry.options.get(
+                            OPTION_LOCAL_TODAY_ENTITY, ""
+                        ),
+                    ): str,
+                    vol.Optional(
+                        OPTION_LOCAL_TOMORROW_ENTITY,
+                        default=self.config_entry.options.get(
+                            OPTION_LOCAL_TOMORROW_ENTITY, ""
+                        ),
+                    ): str,
                 }
             ),
         )
