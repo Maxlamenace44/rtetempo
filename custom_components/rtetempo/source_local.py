@@ -16,25 +16,77 @@ from .const import (
 from .source_models import TempoValue
 
 
+BLUE_HINTS = (
+    "bleu",
+    "blue",
+    "tempo_bleu",
+    "tempo-blue",
+    "tempo blue",
+    "jour_bleu",
+    "jour bleu",
+    "hcjb",
+    "hpjb",
+)
+WHITE_HINTS = (
+    "blanc",
+    "white",
+    "tempo_blanc",
+    "tempo-white",
+    "tempo white",
+    "jour_blanc",
+    "jour blanc",
+    "hcjw",
+    "hpjw",
+)
+RED_HINTS = (
+    "rouge",
+    "red",
+    "tempo_rouge",
+    "tempo-red",
+    "tempo red",
+    "jour_rouge",
+    "jour rouge",
+    "hcjr",
+    "hpjr",
+)
+UNKNOWN_HINTS = (
+    "unknown",
+    "unavailable",
+    "indisponible",
+    "inconnu",
+    "none",
+    "null",
+)
+
+
 def normalize_local_color(raw: str | None) -> str:
     """Normalize a local HA state into one of: blue, white, red, unknown."""
     if raw is None:
         return COLOR_UNKNOWN
 
     value = raw.strip().lower()
+    if not value:
+        return COLOR_UNKNOWN
 
-    mapping = {
-        "bleu": COLOR_BLUE,
-        "blue": COLOR_BLUE,
-        "blanc": COLOR_WHITE,
-        "white": COLOR_WHITE,
-        "rouge": COLOR_RED,
-        "red": COLOR_RED,
-        "unknown": COLOR_UNKNOWN,
-        "unavailable": COLOR_UNKNOWN,
-    }
+    if value in UNKNOWN_HINTS:
+        return COLOR_UNKNOWN
+    if value in BLUE_HINTS:
+        return COLOR_BLUE
+    if value in WHITE_HINTS:
+        return COLOR_WHITE
+    if value in RED_HINTS:
+        return COLOR_RED
 
-    return mapping.get(value, COLOR_UNKNOWN)
+    if any(hint in value for hint in BLUE_HINTS):
+        return COLOR_BLUE
+    if any(hint in value for hint in WHITE_HINTS):
+        return COLOR_WHITE
+    if any(hint in value for hint in RED_HINTS):
+        return COLOR_RED
+    if any(hint in value for hint in UNKNOWN_HINTS):
+        return COLOR_UNKNOWN
+
+    return COLOR_UNKNOWN
 
 
 def read_local_tempo_value(

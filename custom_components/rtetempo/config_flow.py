@@ -14,19 +14,23 @@ from homeassistant.data_entry_flow import FlowResult
 
 from .api_worker import BadRequest, ServerError, UnexpectedError, application_tester
 from .const import (
+    COLOR_UNKNOWN,
     CONFIG_CLIEND_SECRET,
     CONFIG_CLIENT_ID,
+    DEFAULT_COLOR_OPTIONS,
     DOMAIN,
+    FALLBACK_STRATEGY_OPTIONS,
+    FALLBACK_UNKNOWN,
     OPTION_ADJUSTED_DAYS,
-    OPTION_FORECAST_ENABLED,
-    OPTION_SOURCE_MODE,
-    OPTION_FALLBACK_STRATEGY,
     OPTION_DEFAULT_TODAY_COLOR,
     OPTION_DEFAULT_TOMORROW_COLOR,
+    OPTION_FALLBACK_STRATEGY,
+    OPTION_FORECAST_ENABLED,
     OPTION_LOCAL_TODAY_ENTITY,
     OPTION_LOCAL_TOMORROW_ENTITY,
+    OPTION_SOURCE_MODE,
     SOURCE_MODE_AUTO,
-    FALLBACK_UNKNOWN,
+    SOURCE_MODE_OPTIONS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,7 +41,9 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONFIG_CLIENT_ID): str,
         vol.Required(CONFIG_CLIEND_SECRET): str,
         vol.Optional(OPTION_FORECAST_ENABLED, default=False): bool,
-        vol.Optional(OPTION_SOURCE_MODE, default=SOURCE_MODE_AUTO): str,
+        vol.Optional(OPTION_SOURCE_MODE, default=SOURCE_MODE_AUTO): vol.In(
+            SOURCE_MODE_OPTIONS
+        ),
     }
 )
 
@@ -109,8 +115,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         OPTION_SOURCE_MODE, SOURCE_MODE_AUTO
                     ),
                     OPTION_FALLBACK_STRATEGY: FALLBACK_UNKNOWN,
-                    OPTION_DEFAULT_TODAY_COLOR: "unknown",
-                    OPTION_DEFAULT_TOMORROW_COLOR: "unknown",
+                    OPTION_DEFAULT_TODAY_COLOR: COLOR_UNKNOWN,
+                    OPTION_DEFAULT_TOMORROW_COLOR: COLOR_UNKNOWN,
                     OPTION_LOCAL_TODAY_ENTITY: "",
                     OPTION_LOCAL_TOMORROW_ENTITY: "",
                 },
@@ -162,25 +168,25 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                         default=self.config_entry.options.get(
                             OPTION_SOURCE_MODE, SOURCE_MODE_AUTO
                         ),
-                    ): str,
+                    ): vol.In(SOURCE_MODE_OPTIONS),
                     vol.Required(
                         OPTION_FALLBACK_STRATEGY,
                         default=self.config_entry.options.get(
                             OPTION_FALLBACK_STRATEGY, FALLBACK_UNKNOWN
                         ),
-                    ): str,
+                    ): vol.In(FALLBACK_STRATEGY_OPTIONS),
                     vol.Required(
                         OPTION_DEFAULT_TODAY_COLOR,
                         default=self.config_entry.options.get(
-                            OPTION_DEFAULT_TODAY_COLOR, "unknown"
+                            OPTION_DEFAULT_TODAY_COLOR, COLOR_UNKNOWN
                         ),
-                    ): str,
+                    ): vol.In(DEFAULT_COLOR_OPTIONS),
                     vol.Required(
                         OPTION_DEFAULT_TOMORROW_COLOR,
                         default=self.config_entry.options.get(
-                            OPTION_DEFAULT_TOMORROW_COLOR, "unknown"
+                            OPTION_DEFAULT_TOMORROW_COLOR, COLOR_UNKNOWN
                         ),
-                    ): str,
+                    ): vol.In(DEFAULT_COLOR_OPTIONS),
                     vol.Optional(
                         OPTION_LOCAL_TODAY_ENTITY,
                         default=self.config_entry.options.get(

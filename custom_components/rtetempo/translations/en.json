@@ -15,7 +15,8 @@
                 "data": {
                     "client_id": "Client ID",
                     "client_secret": "Client Secret",
-                    "forecast_enabled": "Enable Open DPE forecasts"
+                    "forecast_enabled": "Enable Open DPE forecasts",
+                    "source_mode": "Initial source mode"
                 },
                 "description": "Please fill in your RTE API [Application credentials](https://data.rte-france.com/group/guest/apps)"
             }
@@ -26,7 +27,13 @@
             "init": {
                 "data": {
                     "adjusted_days": "Adjust calendar events to use real hours (06:00) instead of all day",
-                    "forecast_enabled": "Enable Open DPE forecasts"
+                    "forecast_enabled": "Enable Open DPE forecasts",
+                    "source_mode": "Configured source mode",
+                    "fallback_strategy": "Fallback strategy",
+                    "default_today_color": "Default color for today",
+                    "default_tomorrow_color": "Default color for tomorrow",
+                    "local_today_entity": "Local entity for today",
+                    "local_tomorrow_entity": "Local entity for tomorrow"
                 },
                 "title": "RTE Tempo - Options"
             }

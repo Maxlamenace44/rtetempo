@@ -16,7 +16,13 @@ from .const import (
 )
 from .resilience_service import TempoResilienceService
 
-PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.CALENDAR, Platform.SENSOR]
+PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON,
+    Platform.CALENDAR,
+    Platform.SELECT,
+    Platform.SENSOR,
+]
 
 _LOGGER = logging.getLogger(__name__)
 
