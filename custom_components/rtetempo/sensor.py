@@ -48,6 +48,12 @@ _LOGGER = logging.getLogger(__name__)
 from .forecast_coordinator import ForecastCoordinator
 from .sensor_forecast import OpenDPEForecastSensor
 from .sensor_accuracy import TempoAccuracySensor
+from .sensor_resilience import (
+    ResilienceTodayResolvedSensor,
+    ResilienceTodaySourceSensor,
+    ResilienceTomorrowResolvedSensor,
+    ResilienceTomorrowSourceSensor,
+)
 
 # config flow setup
 async def async_setup_entry(
@@ -60,6 +66,8 @@ async def async_setup_entry(
     # Retrieve the API Worker object
     try:
         api_worker = hass.data[DOMAIN][config_entry.entry_id]
+        resilience_service = hass.data[DOMAIN].get(f"{config_entry.entry_id}_resilience")
+
     except KeyError:
         _LOGGER.error(
             "%s: can not calendar: failed to get the API worker object",
@@ -84,6 +92,15 @@ async def async_setup_entry(
         NextCycleTime(config_entry.entry_id),
         OffPeakChangeTime(config_entry.entry_id),
     ]
+    if resilience_service is not None:
+        sensors.extend(
+            [
+                ResilienceTodayResolvedSensor(config_entry.entry_id, resilience_service),
+                ResilienceTodaySourceSensor(config_entry.entry_id, resilience_service),
+                ResilienceTomorrowResolvedSensor(config_entry.entry_id, resilience_service),
+                ResilienceTomorrowSourceSensor(config_entry.entry_id, resilience_service),
+            ]
+        )
 
     # Add the entities to HA
     async_add_entities(sensors, True)
