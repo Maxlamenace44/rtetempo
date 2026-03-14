@@ -1,4 +1,4 @@
-# RTE Tempo (Max)
+# RTE Tempo
 
 Cette extension vous permet d'obtenir les infos [Tempo](https://www.services-rte.com/fr/visualisez-les-donnees-publiees-par-rte/calendrier-des-offres-de-fourniture-de-type-tempo.html) directement depuis RTE.
 

@@ -53,7 +53,7 @@ API_VALUE_RED = "RED"
 API_VALUE_WHITE = "WHITE"
 API_VALUE_BLUE = "BLUE"
 API_ATTRIBUTION = "Données fournies par data.rte-france.com"
-USER_AGENT = "github.com/hekmon/rtetempo v1.6.2"
+USER_AGENT = "github.com/hekmon/rtetempo v1.6.3"
 
 
 # Tempo def
@@ -90,10 +90,15 @@ FALLBACK_LAST_GOOD = "last_good"
 FALLBACK_DEFAULT = "default"
 FALLBACK_UNKNOWN = "unknown"
 
-RESOLVER_SOURCE_RTE = "rte"
+RESOLVER_SOURCE_RTE = "web"
 RESOLVER_SOURCE_LOCAL = "local"
 RESOLVER_SOURCE_DEFAULT = "default"
 RESOLVER_SOURCE_FORECAST = "forecast"
+
+SOURCE_STATUS_NOMINAL = "nominal"
+SOURCE_STATUS_DEGRADED = "dégradé"
+SOURCE_STATUS_FALLBACK = "fallback"
+SOURCE_STATUS_UNAVAILABLE = "indisponible"
 
 COLOR_BLUE = "blue"
 COLOR_WHITE = "white"

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import DeviceInfo
 
@@ -9,9 +10,10 @@ from .const import DEVICE_MANUFACTURER, DEVICE_MODEL, DEVICE_NAME, DOMAIN
 from .resilience_service import TempoResilienceService
 
 
-SOURCE_OPTIONS = ["rte", "local", "default", "forecast", "unknown"]
+SOURCE_OPTIONS = ["web", "local", "default", "forecast", "unknown"]
 MODE_OPTIONS = ["auto", "web", "local", "default", "compare"]
 CONSISTENCY_OPTIONS = ["consistent", "inconsistent", "partial", "unknown"]
+SOURCE_STATUS_OPTIONS = ["nominal", "dégradé", "fallback", "indisponible"]
 
 
 def _display_color(value: str) -> str:
@@ -32,6 +34,7 @@ class _BaseResilienceSensor(SensorEntity):
     def __init__(self, config_id: str, service: TempoResilienceService) -> None:
         self._config_id = config_id
         self._service = service
+        self._listener = None
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -43,28 +46,46 @@ class _BaseResilienceSensor(SensorEntity):
             model=DEVICE_MODEL,
         )
 
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+
+        @callback
+        def _refresh() -> None:
+            self.async_schedule_update_ha_state(True)
+
+        self._listener = _refresh
+        self._service.register_listener(_refresh)
+
+    async def async_will_remove_from_hass(self) -> None:
+        if self._listener is not None:
+            self._service.unregister_listener(self._listener)
+        await super().async_will_remove_from_hass()
+
     def _base_attributes(self, snapshot):
         return {
             "configured_mode": snapshot.configured_source_mode,
             "effective_mode": snapshot.effective_source_mode,
             "runtime_override_mode": snapshot.runtime_source_mode,
-            "local_today_entity": snapshot.local_today_entity,
-            "local_tomorrow_entity": snapshot.local_tomorrow_entity,
-            "generated_at": snapshot.generated_at.isoformat(),
+            "local_current_entity": snapshot.local_today_entity,
+            "local_next_entity": snapshot.local_tomorrow_entity,
+            "source_status": snapshot.source_status,
+            "last_evaluated_at": snapshot.evaluated_at.isoformat(),
+            "last_changed_at": snapshot.last_change_at.isoformat() if snapshot.last_change_at else None,
+            "last_valid_source_at": snapshot.last_valid_source_at.isoformat() if snapshot.last_valid_source_at else None,
         }
 
 
-class ResilienceTodayResolvedSensor(_BaseResilienceSensor):
-    """Resolved color for today."""
+class CurrentResolvedColorSensor(_BaseResilienceSensor):
+    """Resolved current color."""
 
-    _attr_name = "Couleur résolue aujourd'hui"
+    _attr_name = "Couleur actuelle résolue"
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = ["Bleu", "Blanc", "Rouge", "Inconnu"]
     _attr_icon = "mdi:shield-check"
 
     def __init__(self, config_id: str, service: TempoResilienceService) -> None:
         super().__init__(config_id, service)
-        self._attr_unique_id = f"{DOMAIN}_{config_id}_today_resolved"
+        self._attr_unique_id = f"{DOMAIN}_{config_id}_current_resolved"
 
     def update(self) -> None:
         snapshot = self._service.build_snapshot()
@@ -78,8 +99,8 @@ class ResilienceTodayResolvedSensor(_BaseResilienceSensor):
                 "fallback_reason": snapshot.today.fallback_reason,
                 "consistent": snapshot.today.consistent,
                 "compared_with": snapshot.today.compared_with,
-                "rte_color": _display_color(snapshot.today_rte.color) if snapshot.today_rte else None,
-                "rte_available": snapshot.today_rte.available if snapshot.today_rte else False,
+                "web_color": _display_color(snapshot.today_rte.color) if snapshot.today_rte else None,
+                "web_available": snapshot.today_rte.available if snapshot.today_rte else False,
                 "local_color": _display_color(snapshot.today_local.color) if snapshot.today_local else None,
                 "local_available": snapshot.today_local.available if snapshot.today_local else False,
             }
@@ -87,17 +108,17 @@ class ResilienceTodayResolvedSensor(_BaseResilienceSensor):
         self._attr_extra_state_attributes = attrs
 
 
-class ResilienceTodaySourceSensor(_BaseResilienceSensor):
-    """Resolved source for today."""
+class CurrentResolvedSourceSensor(_BaseResilienceSensor):
+    """Resolved current source."""
 
-    _attr_name = "Source résolue aujourd'hui"
+    _attr_name = "Source actuelle résolue"
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = SOURCE_OPTIONS
     _attr_icon = "mdi:source-branch"
 
     def __init__(self, config_id: str, service: TempoResilienceService) -> None:
         super().__init__(config_id, service)
-        self._attr_unique_id = f"{DOMAIN}_{config_id}_today_source"
+        self._attr_unique_id = f"{DOMAIN}_{config_id}_current_source"
 
     def update(self) -> None:
         snapshot = self._service.build_snapshot()
@@ -106,17 +127,17 @@ class ResilienceTodaySourceSensor(_BaseResilienceSensor):
         self._attr_extra_state_attributes = self._base_attributes(snapshot)
 
 
-class ResilienceTomorrowResolvedSensor(_BaseResilienceSensor):
-    """Resolved color for tomorrow."""
+class NextResolvedColorSensor(_BaseResilienceSensor):
+    """Resolved next color."""
 
-    _attr_name = "Couleur résolue demain"
+    _attr_name = "Prochaine couleur résolue"
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = ["Bleu", "Blanc", "Rouge", "Inconnu"]
     _attr_icon = "mdi:calendar-arrow-right"
 
     def __init__(self, config_id: str, service: TempoResilienceService) -> None:
         super().__init__(config_id, service)
-        self._attr_unique_id = f"{DOMAIN}_{config_id}_tomorrow_resolved"
+        self._attr_unique_id = f"{DOMAIN}_{config_id}_next_resolved"
 
     def update(self) -> None:
         snapshot = self._service.build_snapshot()
@@ -130,8 +151,8 @@ class ResilienceTomorrowResolvedSensor(_BaseResilienceSensor):
                 "fallback_reason": snapshot.tomorrow.fallback_reason,
                 "consistent": snapshot.tomorrow.consistent,
                 "compared_with": snapshot.tomorrow.compared_with,
-                "rte_color": _display_color(snapshot.tomorrow_rte.color) if snapshot.tomorrow_rte else None,
-                "rte_available": snapshot.tomorrow_rte.available if snapshot.tomorrow_rte else False,
+                "web_color": _display_color(snapshot.tomorrow_rte.color) if snapshot.tomorrow_rte else None,
+                "web_available": snapshot.tomorrow_rte.available if snapshot.tomorrow_rte else False,
                 "local_color": _display_color(snapshot.tomorrow_local.color) if snapshot.tomorrow_local else None,
                 "local_available": snapshot.tomorrow_local.available if snapshot.tomorrow_local else False,
             }
@@ -139,17 +160,17 @@ class ResilienceTomorrowResolvedSensor(_BaseResilienceSensor):
         self._attr_extra_state_attributes = attrs
 
 
-class ResilienceTomorrowSourceSensor(_BaseResilienceSensor):
-    """Resolved source for tomorrow."""
+class NextResolvedSourceSensor(_BaseResilienceSensor):
+    """Resolved next source."""
 
-    _attr_name = "Source résolue demain"
+    _attr_name = "Source prochaine résolue"
     _attr_device_class = SensorDeviceClass.ENUM
     _attr_options = SOURCE_OPTIONS
     _attr_icon = "mdi:source-merge"
 
     def __init__(self, config_id: str, service: TempoResilienceService) -> None:
         super().__init__(config_id, service)
-        self._attr_unique_id = f"{DOMAIN}_{config_id}_tomorrow_source"
+        self._attr_unique_id = f"{DOMAIN}_{config_id}_next_source"
 
     def update(self) -> None:
         snapshot = self._service.build_snapshot()
@@ -177,8 +198,34 @@ class ResilienceModeSensor(_BaseResilienceSensor):
         self._attr_extra_state_attributes = self._base_attributes(snapshot)
 
 
+class ResilienceSourceStatusSensor(_BaseResilienceSensor):
+    """Stable source status."""
+
+    _attr_name = "Source status"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = SOURCE_STATUS_OPTIONS
+    _attr_icon = "mdi:lan-connect"
+
+    def __init__(self, config_id: str, service: TempoResilienceService) -> None:
+        super().__init__(config_id, service)
+        self._attr_unique_id = f"{DOMAIN}_{config_id}_source_status"
+
+    def update(self) -> None:
+        snapshot = self._service.build_snapshot()
+        self._attr_available = True
+        self._attr_native_value = snapshot.source_status
+        attrs = self._base_attributes(snapshot)
+        attrs.update(
+            {
+                "current_source": snapshot.today.source,
+                "next_source": snapshot.tomorrow.source,
+            }
+        )
+        self._attr_extra_state_attributes = attrs
+
+
 class ResilienceConsistencySensor(_BaseResilienceSensor):
-    """Consistency state between RTE and local sources."""
+    """Consistency state between web and local sources."""
 
     _attr_name = "Cohérence Tempo"
     _attr_device_class = SensorDeviceClass.ENUM
@@ -193,14 +240,14 @@ class ResilienceConsistencySensor(_BaseResilienceSensor):
         snapshot = self._service.build_snapshot()
         self._attr_available = True
 
-        today_consistent = (
+        current_consistent = (
             snapshot.today_rte is not None
             and snapshot.today_local is not None
             and snapshot.today_rte.available
             and snapshot.today_local.available
             and snapshot.today_rte.color == snapshot.today_local.color
         )
-        tomorrow_consistent = (
+        next_consistent = (
             snapshot.tomorrow_rte is not None
             and snapshot.tomorrow_local is not None
             and snapshot.tomorrow_rte.available
@@ -208,23 +255,23 @@ class ResilienceConsistencySensor(_BaseResilienceSensor):
             and snapshot.tomorrow_rte.color == snapshot.tomorrow_local.color
         )
 
-        comparable_today = bool(
+        comparable_current = bool(
             snapshot.today_rte is not None
             and snapshot.today_local is not None
             and snapshot.today_rte.available
             and snapshot.today_local.available
         )
-        comparable_tomorrow = bool(
+        comparable_next = bool(
             snapshot.tomorrow_rte is not None
             and snapshot.tomorrow_local is not None
             and snapshot.tomorrow_rte.available
             and snapshot.tomorrow_local.available
         )
 
-        if comparable_today and comparable_tomorrow:
-            state = "consistent" if (today_consistent and tomorrow_consistent) else "inconsistent"
-        elif comparable_today or comparable_tomorrow:
-            current_value = today_consistent if comparable_today else tomorrow_consistent
+        if comparable_current and comparable_next:
+            state = "consistent" if (current_consistent and next_consistent) else "inconsistent"
+        elif comparable_current or comparable_next:
+            current_value = current_consistent if comparable_current else next_consistent
             state = "partial" if current_value else "inconsistent"
         else:
             state = "unknown"
@@ -233,21 +280,39 @@ class ResilienceConsistencySensor(_BaseResilienceSensor):
         attrs = self._base_attributes(snapshot)
         attrs.update(
             {
-                "today_comparable": comparable_today,
-                "today_consistent": today_consistent if comparable_today else None,
-                "today_rte_color": _display_color(snapshot.today_rte.color) if snapshot.today_rte else None,
-                "today_local_color": _display_color(snapshot.today_local.color) if snapshot.today_local else None,
-                "tomorrow_comparable": comparable_tomorrow,
-                "tomorrow_consistent": tomorrow_consistent if comparable_tomorrow else None,
-                "tomorrow_rte_color": _display_color(snapshot.tomorrow_rte.color) if snapshot.tomorrow_rte else None,
-                "tomorrow_local_color": _display_color(snapshot.tomorrow_local.color) if snapshot.tomorrow_local else None,
+                "current_comparable": comparable_current,
+                "current_consistent": current_consistent if comparable_current else None,
+                "current_web_color": _display_color(snapshot.today_rte.color) if snapshot.today_rte else None,
+                "current_local_color": _display_color(snapshot.today_local.color) if snapshot.today_local else None,
+                "next_comparable": comparable_next,
+                "next_consistent": next_consistent if comparable_next else None,
+                "next_web_color": _display_color(snapshot.tomorrow_rte.color) if snapshot.tomorrow_rte else None,
+                "next_local_color": _display_color(snapshot.tomorrow_local.color) if snapshot.tomorrow_local else None,
             }
         )
         self._attr_extra_state_attributes = attrs
 
 
-class ResilienceLastUpdateSensor(_BaseResilienceSensor):
-    """Timestamp of the last generated snapshot."""
+class ResilienceLastEvaluationSensor(_BaseResilienceSensor):
+    """Timestamp of the last resolver evaluation."""
+
+    _attr_name = "Tempo dernière évaluation résilience"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_icon = "mdi:clock-outline"
+
+    def __init__(self, config_id: str, service: TempoResilienceService) -> None:
+        super().__init__(config_id, service)
+        self._attr_unique_id = f"{DOMAIN}_{config_id}_tempo_last_evaluation"
+
+    def update(self) -> None:
+        snapshot = self._service.build_snapshot()
+        self._attr_available = True
+        self._attr_native_value = snapshot.evaluated_at
+        self._attr_extra_state_attributes = self._base_attributes(snapshot)
+
+
+class ResilienceLastChangeSensor(_BaseResilienceSensor):
+    """Timestamp of the last effective business change."""
 
     _attr_name = "Tempo dernière mise à jour résilience"
     _attr_device_class = SensorDeviceClass.TIMESTAMP
@@ -255,10 +320,28 @@ class ResilienceLastUpdateSensor(_BaseResilienceSensor):
 
     def __init__(self, config_id: str, service: TempoResilienceService) -> None:
         super().__init__(config_id, service)
-        self._attr_unique_id = f"{DOMAIN}_{config_id}_tempo_last_update"
+        self._attr_unique_id = f"{DOMAIN}_{config_id}_tempo_last_change"
 
     def update(self) -> None:
         snapshot = self._service.build_snapshot()
-        self._attr_available = True
-        self._attr_native_value = snapshot.generated_at
+        self._attr_available = snapshot.last_change_at is not None
+        self._attr_native_value = snapshot.last_change_at
+        self._attr_extra_state_attributes = self._base_attributes(snapshot)
+
+
+class ResilienceLastValidSourceSensor(_BaseResilienceSensor):
+    """Timestamp of the last valid payload received from the active source."""
+
+    _attr_name = "Tempo dernière donnée valide source"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_icon = "mdi:database-check-outline"
+
+    def __init__(self, config_id: str, service: TempoResilienceService) -> None:
+        super().__init__(config_id, service)
+        self._attr_unique_id = f"{DOMAIN}_{config_id}_tempo_last_valid_source"
+
+    def update(self) -> None:
+        snapshot = self._service.build_snapshot()
+        self._attr_available = snapshot.last_valid_source_at is not None
+        self._attr_native_value = snapshot.last_valid_source_at
         self._attr_extra_state_attributes = self._base_attributes(snapshot)

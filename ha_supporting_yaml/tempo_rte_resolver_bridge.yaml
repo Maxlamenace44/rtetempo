@@ -1,0 +1,149 @@
+###############################################################################
+# /config/packages/tempo_rte_resolver_bridge.yaml
+# SADC2 - GRID Tempo Resolver Bridge
+# Version robuste compatible avec :
+# - source locale KNX du package tempo_edf_knx_theme.yaml
+# - intégration RTE Tempo d'origine et fork résilience
+###############################################################################
+
+template:
+  - sensor:
+      - name: "grid_tempo_resolver_source"
+        unique_id: grid_tempo_resolver_source
+        state: >
+          {% set local_cur = states('sensor.tempo_local_couleur_actuelle_resolver') | lower %}
+          {% set local_grid = states('sensor.grid_tempo_day_color_en') | lower %}
+          {% set rte_cur = states('sensor.rte_tempo_couleur_actuelle') | lower %}
+          {% set local = local_cur if local_cur in ['blue','white','red'] else local_grid %}
+          {% if local in ['blue','white','red'] %}
+            local_knx
+          {% elif rte_cur in ['bleu', 'blue', 'blanc', 'white', 'rouge', 'red'] %}
+            rte_tempo
+          {% else %}
+            none
+          {% endif %}
+
+      - name: "grid_tempo_resolver_current_color_en"
+        unique_id: grid_tempo_resolver_current_color_en
+        state: >
+          {% set local_cur = states('sensor.tempo_local_couleur_actuelle_resolver') | lower %}
+          {% set local_grid = states('sensor.grid_tempo_day_color_en') | lower %}
+          {% set rte = states('sensor.rte_tempo_couleur_actuelle') | lower %}
+          {% set local = local_cur if local_cur in ['blue','white','red'] else local_grid %}
+          {% if local in ['blue','white','red'] %}
+            {{ local }}
+          {% elif rte in ['bleu', 'blue'] %}
+            blue
+          {% elif rte in ['blanc', 'white'] %}
+            white
+          {% elif rte in ['rouge', 'red'] %}
+            red
+          {% else %}
+            unknown
+          {% endif %}
+
+      - name: "grid_tempo_resolver_next_color_en"
+        unique_id: grid_tempo_resolver_next_color_en
+        state: >
+          {% set local_nxt = states('sensor.tempo_local_couleur_prochaine_resolver') | lower %}
+          {% set local_grid = states('sensor.grid_tempo_next_color_en') | lower %}
+          {% set rte_a = states('sensor.rte_tempo_prochaine_couleur') | lower %}
+          {% set rte_b = states('sensor.rte_tempo_couleur_prochaine') | lower %}
+          {% set rte_c = states('sensor.rte_tempo_couleur_demain') | lower %}
+          {% set rte = rte_a if rte_a not in ['unknown','unavailable','none',''] else (rte_b if rte_b not in ['unknown','unavailable','none',''] else rte_c) %}
+          {% set local = local_nxt if local_nxt in ['blue','white','red'] else local_grid %}
+          {% if local in ['blue','white','red'] %}
+            {{ local }}
+          {% elif rte in ['bleu', 'blue'] %}
+            blue
+          {% elif rte in ['blanc', 'white'] %}
+            white
+          {% elif rte in ['rouge', 'red'] %}
+            red
+          {% else %}
+            unknown
+          {% endif %}
+
+      - name: "grid_tempo_resolver_current_color"
+        unique_id: grid_tempo_resolver_current_color
+        state: >
+          {% set v = states('sensor.grid_tempo_resolver_current_color_en') %}
+          {% if v == 'blue' %}
+            bleu
+          {% elif v == 'white' %}
+            blanc
+          {% elif v == 'red' %}
+            rouge
+          {% else %}
+            inconnu
+          {% endif %}
+
+      - name: "grid_tempo_resolver_next_color"
+        unique_id: grid_tempo_resolver_next_color
+        state: >
+          {% set v = states('sensor.grid_tempo_resolver_next_color_en') %}
+          {% if v == 'blue' %}
+            bleu
+          {% elif v == 'white' %}
+            blanc
+          {% elif v == 'red' %}
+            rouge
+          {% else %}
+            inconnu
+          {% endif %}
+
+      - name: "grid_tempo_resolver_current_period"
+        unique_id: grid_tempo_resolver_current_period
+        state: >
+          {% set local = states('sensor.tempo_type_heure_actuel') | lower %}
+          {% set local_grid = states('sensor.grid_tempo_day_period') | lower %}
+          {% set hc = states('binary_sensor.rte_tempo_heures_creuses') %}
+          {% set period = local if local in ['hc','hp'] else local_grid %}
+          {% if period in ['hc','hp'] %}
+            {{ period }}
+          {% elif hc == 'on' %}
+            hc
+          {% elif hc == 'off' %}
+            hp
+          {% else %}
+            inconnu
+          {% endif %}
+
+      - name: "grid_tempo_resolver_current_label"
+        unique_id: grid_tempo_resolver_current_label
+        state: >
+          {% set c = states('sensor.grid_tempo_resolver_current_color') %}
+          {% set p = states('sensor.grid_tempo_resolver_current_period') %}
+          {% if c in ['bleu', 'blanc', 'rouge'] and p in ['hc', 'hp'] %}
+            {{ c | capitalize }} {{ p | upper }}
+          {% elif c in ['bleu', 'blanc', 'rouge'] %}
+            {{ c | capitalize }}
+          {% else %}
+            Inconnu
+          {% endif %}
+
+      - name: "tempo_local_couleur_actuelle_resolver_bridge"
+        unique_id: tempo_local_couleur_actuelle_resolver_bridge
+        state: >
+          {{ states('sensor.grid_tempo_resolver_current_color_en') }}
+
+      - name: "tempo_local_couleur_prochaine_resolver_bridge"
+        unique_id: tempo_local_couleur_prochaine_resolver_bridge
+        state: >
+          {{ states('sensor.grid_tempo_resolver_next_color_en') }}
+
+  - binary_sensor:
+      - name: "grid_tempo_resolver_hc"
+        unique_id: grid_tempo_resolver_hc
+        state: >
+          {{ states('sensor.grid_tempo_resolver_current_period') == 'hc' }}
+
+      - name: "grid_tempo_resolver_hp"
+        unique_id: grid_tempo_resolver_hp
+        state: >
+          {{ states('sensor.grid_tempo_resolver_current_period') == 'hp' }}
+
+      - name: "grid_tempo_resolver_tomorrow_red"
+        unique_id: grid_tempo_resolver_tomorrow_red
+        state: >
+          {{ states('sensor.grid_tempo_resolver_next_color_en') == 'red' }}

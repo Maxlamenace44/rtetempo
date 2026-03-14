@@ -49,13 +49,16 @@ from .forecast_coordinator import ForecastCoordinator
 from .sensor_forecast import OpenDPEForecastSensor
 from .sensor_accuracy import TempoAccuracySensor
 from .sensor_resilience import (
+    CurrentResolvedColorSensor,
+    CurrentResolvedSourceSensor,
+    NextResolvedColorSensor,
+    NextResolvedSourceSensor,
     ResilienceConsistencySensor,
-    ResilienceLastUpdateSensor,
+    ResilienceLastChangeSensor,
+    ResilienceLastEvaluationSensor,
+    ResilienceLastValidSourceSensor,
     ResilienceModeSensor,
-    ResilienceTodayResolvedSensor,
-    ResilienceTodaySourceSensor,
-    ResilienceTomorrowResolvedSensor,
-    ResilienceTomorrowSourceSensor,
+    ResilienceSourceStatusSensor,
 )
 
 # config flow setup
@@ -98,13 +101,16 @@ async def async_setup_entry(
     if resilience_service is not None:
         sensors.extend(
             [
-                ResilienceTodayResolvedSensor(config_entry.entry_id, resilience_service),
-                ResilienceTodaySourceSensor(config_entry.entry_id, resilience_service),
-                ResilienceTomorrowResolvedSensor(config_entry.entry_id, resilience_service),
-                ResilienceTomorrowSourceSensor(config_entry.entry_id, resilience_service),
+                CurrentResolvedColorSensor(config_entry.entry_id, resilience_service),
+                CurrentResolvedSourceSensor(config_entry.entry_id, resilience_service),
+                NextResolvedColorSensor(config_entry.entry_id, resilience_service),
+                NextResolvedSourceSensor(config_entry.entry_id, resilience_service),
                 ResilienceModeSensor(config_entry.entry_id, resilience_service),
+                ResilienceSourceStatusSensor(config_entry.entry_id, resilience_service),
                 ResilienceConsistencySensor(config_entry.entry_id, resilience_service),
-                ResilienceLastUpdateSensor(config_entry.entry_id, resilience_service),
+                ResilienceLastEvaluationSensor(config_entry.entry_id, resilience_service),
+                ResilienceLastChangeSensor(config_entry.entry_id, resilience_service),
+                ResilienceLastValidSourceSensor(config_entry.entry_id, resilience_service),
             ]
         )
 

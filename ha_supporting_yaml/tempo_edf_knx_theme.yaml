@@ -1,0 +1,500 @@
+###############################################################################
+# /config/packages/tempo_edf_knx_theme.yaml
+# SADC2 - Tempo EDF + KNX + HA Theme + Test bench
+# Version mise à jour pour retour Local / Résilience
+###############################################################################
+
+knx:
+  event:
+    - address:
+        - "1/0/0"
+      type: "1byte_unsigned"
+
+    - address:
+        - "1/0/1"
+
+  switch:
+    - name: "knx_tempo_light_white"
+      address: "10/0/81"
+      state_address: "10/1/81"
+
+    - name: "knx_tempo_light_green"
+      address: "10/0/82"
+      state_address: "10/1/82"
+
+    - name: "knx_tempo_light_red"
+      address: "10/0/83"
+      state_address: "10/1/83"
+
+    - name: "knx_tempo_light_blue"
+      address: "10/0/84"
+      state_address: "10/1/84"
+
+input_boolean:
+  tempo_test_mode:
+    name: Tempo test mode
+    initial: false
+
+input_select:
+  tempo_test_code:
+    name: Tempo test code
+    options:
+      - "0"
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+      - "5"
+      - "6"
+      - "7"
+      - "8"
+      - "9"
+      - "10"
+    initial: "8"
+
+input_button:
+  tempo_reset_test:
+    name: Tempo reset test
+
+  tempo_refresh_knx:
+    name: Tempo refresh KNX
+
+template:
+  - trigger:
+      - platform: event
+        event_type: knx_event
+        event_data:
+          destination: "1/0/0"
+    sensor:
+      - name: "edf_tempo_tarif_actuel_code_live"
+        unique_id: edf_tempo_tarif_actuel_code_live
+        state: >
+          {{ trigger.event.data.value | int(0) }}
+
+  - trigger:
+      - platform: event
+        event_type: knx_event
+        event_data:
+          destination: "1/0/1"
+    sensor:
+      - name: "edf_tempo_tarif_prochain_raw"
+        unique_id: edf_tempo_tarif_prochain_raw
+        state: >
+          {% set d = trigger.event.data.data %}
+          {% if d is iterable and d is not string %}
+            {{ d | join(',') }}
+          {% else %}
+            {{ d }}
+          {% endif %}
+
+      - name: "edf_tempo_prochaine_periode_code_live"
+        unique_id: edf_tempo_prochaine_periode_code_live
+        state: >
+          {% set d = trigger.event.data.data %}
+          {% if d is iterable and d is not string and (d | list | count) >= 1 %}
+            {{ (d | list)[0] | int(0) }}
+          {% else %}
+            0
+          {% endif %}
+
+      - name: "edf_tempo_tarif_prochain_code_live"
+        unique_id: edf_tempo_tarif_prochain_code_live
+        state: >
+          {% set d = trigger.event.data.data %}
+          {% if d is iterable and d is not string %}
+            {% set dl = d | list %}
+            {% if dl | count >= 3 %}
+              {{ dl[2] | int(0) }}
+            {% elif dl | count >= 1 %}
+              {{ dl[-1] | int(0) }}
+            {% else %}
+              0
+            {% endif %}
+          {% else %}
+            {{ d | int(0) }}
+          {% endif %}
+
+  - sensor:
+      - name: "edf_tempo_tarif_actuel_code"
+        unique_id: edf_tempo_tarif_actuel_code
+        state: >
+          {% if is_state('input_boolean.tempo_test_mode', 'on') %}
+            {{ states('input_select.tempo_test_code') | int(0) }}
+          {% else %}
+            {{ states('sensor.edf_tempo_tarif_actuel_code_live') | int(0) }}
+          {% endif %}
+
+      - name: "edf_tempo_tarif_prochain_code"
+        unique_id: edf_tempo_tarif_prochain_code
+        state: >
+          {{ states('sensor.edf_tempo_tarif_prochain_code_live') | int(0) }}
+
+      - name: "tempo_tarif_actuel"
+        unique_id: tempo_tarif_actuel
+        state: >
+          {% set v = states('sensor.edf_tempo_tarif_actuel_code') | int(0) %}
+          {% if v == 0 %}
+            base
+          {% elif v in [1, 2, 5, 8] %}
+            bleu
+          {% elif v in [6, 9] %}
+            blanc
+          {% elif v in [7, 10] %}
+            rouge
+          {% elif v in [3, 4] %}
+            ejp
+          {% else %}
+            inconnu
+          {% endif %}
+
+      - name: "tempo_tarif_prochain"
+        unique_id: tempo_tarif_prochain
+        state: >
+          {% set v = states('sensor.edf_tempo_tarif_prochain_code') | int(0) %}
+          {% if v == 0 %}
+            base
+          {% elif v in [1, 2, 5, 8] %}
+            bleu
+          {% elif v in [6, 9] %}
+            blanc
+          {% elif v in [7, 10] %}
+            rouge
+          {% elif v in [3, 4] %}
+            ejp
+          {% else %}
+            inconnu
+          {% endif %}
+
+      - name: "tempo_type_heure_actuel"
+        unique_id: tempo_type_heure_actuel
+        state: >
+          {% set v = states('sensor.edf_tempo_tarif_actuel_code') | int(0) %}
+          {% if v in [1, 5, 6, 7] %}
+            hc
+          {% elif v in [2, 8, 9, 10] %}
+            hp
+          {% elif v == 3 %}
+            normal
+          {% elif v == 4 %}
+            pointe
+          {% else %}
+            inconnu
+          {% endif %}
+
+      - name: "tempo_type_heure_prochain"
+        unique_id: tempo_type_heure_prochain
+        state: >
+          {% set v = states('sensor.edf_tempo_tarif_prochain_code') | int(0) %}
+          {% if v in [1, 5, 6, 7] %}
+            hc
+          {% elif v in [2, 8, 9, 10] %}
+            hp
+          {% elif v == 3 %}
+            normal
+          {% elif v == 4 %}
+            pointe
+          {% else %}
+            inconnu
+          {% endif %}
+
+      - name: "tempo_local_couleur_actuelle_resolver"
+        unique_id: tempo_local_couleur_actuelle_resolver
+        state: >
+          {% set v = states('sensor.edf_tempo_tarif_actuel_code') | int(0) %}
+          {% if v in [5, 8] %}
+            blue
+          {% elif v in [6, 9] %}
+            white
+          {% elif v in [7, 10] %}
+            red
+          {% else %}
+            unknown
+          {% endif %}
+
+      - name: "tempo_local_couleur_prochaine_resolver"
+        unique_id: tempo_local_couleur_prochaine_resolver
+        state: >
+          {% set v = states('sensor.edf_tempo_tarif_prochain_code') | int(0) %}
+          {% if v in [5, 8] %}
+            blue
+          {% elif v in [6, 9] %}
+            white
+          {% elif v in [7, 10] %}
+            red
+          {% else %}
+            unknown
+          {% endif %}
+
+      - name: "tempo_couleur_actuelle"
+        unique_id: tempo_couleur_actuelle
+        state: >
+          {% set v = states('sensor.edf_tempo_tarif_actuel_code') | int(0) %}
+          {% if v in [5, 8] %}
+            bleu
+          {% elif v in [6, 9] %}
+            blanc
+          {% elif v in [7, 10] %}
+            rouge
+          {% else %}
+            inconnu
+          {% endif %}
+
+      - name: "tempo_couleur_prochaine"
+        unique_id: tempo_couleur_prochaine
+        state: >
+          {% set v = states('sensor.edf_tempo_tarif_prochain_code') | int(0) %}
+          {% if v in [5, 8] %}
+            bleu
+          {% elif v in [6, 9] %}
+            blanc
+          {% elif v in [7, 10] %}
+            rouge
+          {% else %}
+            inconnu
+          {% endif %}
+
+      - name: "tempo_tarif_actuel_libelle"
+        unique_id: tempo_tarif_actuel_libelle
+        state: >
+          {% set v = states('sensor.edf_tempo_tarif_actuel_code') | int(0) %}
+          {% if v == 0 %}Base
+          {% elif v == 1 %}Bleu HC hors Tempo
+          {% elif v == 2 %}Bleu HP hors Tempo
+          {% elif v == 3 %}EJP jour normal
+          {% elif v == 4 %}EJP jour de pointe
+          {% elif v == 5 %}Bleu HC Tempo
+          {% elif v == 6 %}Blanc HC Tempo
+          {% elif v == 7 %}Rouge HC Tempo
+          {% elif v == 8 %}Bleu HP Tempo
+          {% elif v == 9 %}Blanc HP Tempo
+          {% elif v == 10 %}Rouge HP Tempo
+          {% else %}Inconnu
+          {% endif %}
+
+      - name: "tempo_tarif_prochain_libelle"
+        unique_id: tempo_tarif_prochain_libelle
+        state: >
+          {% set v = states('sensor.edf_tempo_tarif_prochain_code') | int(0) %}
+          {% if v == 0 %}Base
+          {% elif v == 1 %}Bleu HC hors Tempo
+          {% elif v == 2 %}Bleu HP hors Tempo
+          {% elif v == 3 %}EJP jour normal
+          {% elif v == 4 %}EJP jour de pointe
+          {% elif v == 5 %}Bleu HC Tempo
+          {% elif v == 6 %}Blanc HC Tempo
+          {% elif v == 7 %}Rouge HC Tempo
+          {% elif v == 8 %}Bleu HP Tempo
+          {% elif v == 9 %}Blanc HP Tempo
+          {% elif v == 10 %}Rouge HP Tempo
+          {% else %}Inconnu
+          {% endif %}
+
+      - name: "tempo_couleur_jour"
+        unique_id: tempo_couleur_jour
+        state: >
+          {{ states('sensor.tempo_couleur_actuelle') }}
+
+      - name: "tempo_couleur_demain"
+        unique_id: tempo_couleur_demain
+        state: >
+          {{ states('sensor.tempo_couleur_prochaine') }}
+
+      - name: "tempo_periode_jour"
+        unique_id: tempo_periode_jour
+        state: >
+          {{ states('sensor.tempo_type_heure_actuel') }}
+
+      - name: "tempo_periode_demain"
+        unique_id: tempo_periode_demain
+        state: >
+          {{ states('sensor.tempo_type_heure_prochain') }}
+
+      - name: "tempo_jour_libelle"
+        unique_id: tempo_jour_libelle
+        state: >
+          {{ states('sensor.tempo_tarif_actuel_libelle') }}
+
+      - name: "tempo_demain_libelle"
+        unique_id: tempo_demain_libelle
+        state: >
+          {{ states('sensor.tempo_tarif_prochain_libelle') }}
+
+      - name: "tempo_theme_ha"
+        unique_id: tempo_theme_ha
+        state: >
+          {% set v = states('sensor.edf_tempo_tarif_actuel_code') | int(0) %}
+          {% if v in [5, 8] %}
+            Tempo Bleu
+          {% elif v in [6, 9] %}
+            Tempo Blanc
+          {% elif v in [7, 10] %}
+            Tempo Rouge
+          {% else %}
+            default
+          {% endif %}
+
+      - name: "tempo_voyant_cible"
+        unique_id: tempo_voyant_cible
+        state: >
+          {% set v = states('sensor.edf_tempo_tarif_actuel_code') | int(0) %}
+          {% if v == 5 %}
+            green
+          {% elif v in [5, 8] %}
+            blue
+          {% elif v in [6, 9] %}
+            white
+          {% elif v in [7, 10] %}
+            red
+          {% else %}
+            off
+          {% endif %}
+
+automation:
+  - alias: "SADC2 Tempo - refresh KNX"
+    id: sadc2_tempo_refresh_knx
+    mode: single
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: time
+        at: "00:00:00"
+      - platform: time
+        at: "06:02:00"
+      - platform: time
+        at: "06:10:00"
+      - platform: time
+        at: "07:02:00"
+      - platform: time
+        at: "08:02:00"
+      - platform: time
+        at: "22:02:00"
+      - platform: time
+        at: "22:10:00"
+      - platform: state
+        entity_id: input_button.tempo_refresh_knx
+    action:
+      - action: knx.read
+        data:
+          address: "1/0/0"
+      - delay: "00:00:01"
+      - action: knx.read
+        data:
+          address: "1/0/1"
+
+  - alias: "SADC2 Tempo - reset test"
+    id: sadc2_tempo_reset_test
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_button.tempo_reset_test
+    action:
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.tempo_test_mode
+      - service: input_select.select_option
+        target:
+          entity_id: input_select.tempo_test_code
+        data:
+          option: "8"
+      - action: knx.read
+        data:
+          address: "1/0/0"
+      - delay: "00:00:01"
+      - action: knx.read
+        data:
+          address: "1/0/1"
+
+  - alias: "SADC2 Tempo - appliquer theme et voyants"
+    id: sadc2_tempo_appliquer_theme_et_voyants
+    mode: restart
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id:
+          - sensor.edf_tempo_tarif_actuel_code
+          - sensor.tempo_theme_ha
+          - sensor.tempo_voyant_cible
+      - platform: time
+        at: "00:00:00"
+      - platform: time
+        at: "06:02:00"
+      - platform: time
+        at: "06:10:00"
+      - platform: time
+        at: "07:02:00"
+      - platform: time
+        at: "08:02:00"
+      - platform: time
+        at: "22:02:00"
+      - platform: time
+        at: "22:10:00"
+    action:
+      - service: switch.turn_off
+        target:
+          entity_id:
+            - switch.knx_tempo_light_white
+            - switch.knx_tempo_light_green
+            - switch.knx_tempo_light_red
+            - switch.knx_tempo_light_blue
+
+      - choose:
+          - conditions:
+              - condition: state
+                entity_id: sensor.tempo_voyant_cible
+                state: "green"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.knx_tempo_light_green
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.tempo_voyant_cible
+                state: "blue"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.knx_tempo_light_blue
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.tempo_voyant_cible
+                state: "white"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.knx_tempo_light_white
+
+          - conditions:
+              - condition: state
+                entity_id: sensor.tempo_voyant_cible
+                state: "red"
+            sequence:
+              - service: switch.turn_on
+                target:
+                  entity_id: switch.knx_tempo_light_red
+
+      - service: frontend.set_theme
+        data:
+          name: "{{ states('sensor.tempo_theme_ha') }}"
+
+  - alias: "SADC2 Tempo - notification demain rouge"
+    id: sadc2_tempo_notification_demain_rouge
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.edf_tempo_tarif_prochain_code
+      - platform: time
+        at: "11:05:00"
+      - platform: time
+        at: "20:05:00"
+    condition:
+      - condition: state
+        entity_id: sensor.tempo_couleur_prochaine
+        state: "rouge"
+    action:
+      - service: persistent_notification.create
+        data:
+          title: "Alerte Tempo"
+          message: "Demain est un jour rouge Tempo."

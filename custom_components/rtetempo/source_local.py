@@ -16,75 +16,48 @@ from .const import (
 from .source_models import TempoValue
 
 
-BLUE_HINTS = (
-    "bleu",
-    "blue",
-    "tempo_bleu",
-    "tempo-blue",
-    "tempo blue",
-    "jour_bleu",
-    "jour bleu",
-    "hcjb",
-    "hpjb",
-)
-WHITE_HINTS = (
-    "blanc",
-    "white",
-    "tempo_blanc",
-    "tempo-white",
-    "tempo white",
-    "jour_blanc",
-    "jour blanc",
-    "hcjw",
-    "hpjw",
-)
-RED_HINTS = (
-    "rouge",
-    "red",
-    "tempo_rouge",
-    "tempo-red",
-    "tempo red",
-    "jour_rouge",
-    "jour rouge",
-    "hcjr",
-    "hpjr",
-)
-UNKNOWN_HINTS = (
-    "unknown",
-    "unavailable",
-    "indisponible",
-    "inconnu",
-    "none",
-    "null",
-)
-
-
 def normalize_local_color(raw: str | None) -> str:
-    """Normalize a local HA state into one of: blue, white, red, unknown."""
+    """Normalize a local HA state into one of: blue, white, red, unknown.
+
+    Accepted inputs:
+    - English/French colors, any case.
+    - Labels containing HC/HP/Tempo (eg. "Rouge HP Tempo", "Bleu HC").
+    - Numeric Tempo codes: 5/8 blue, 6/9 white, 7/10 red.
+
+    Invalid business values return unknown:
+    - 0 Base
+    - 1/2 Bleu tariff outside Tempo business color
+    - 3/4 EJP
+    """
     if raw is None:
         return COLOR_UNKNOWN
 
-    value = raw.strip().lower()
-    if not value:
+    value = str(raw).strip().lower()
+    if value in {"", "none", "unknown", "unavailable", "inconnu"}:
         return COLOR_UNKNOWN
 
-    if value in UNKNOWN_HINTS:
-        return COLOR_UNKNOWN
-    if value in BLUE_HINTS:
-        return COLOR_BLUE
-    if value in WHITE_HINTS:
-        return COLOR_WHITE
-    if value in RED_HINTS:
-        return COLOR_RED
+    compact = value.replace("_", " ").replace("-", " ")
 
-    if any(hint in value for hint in BLUE_HINTS):
-        return COLOR_BLUE
-    if any(hint in value for hint in WHITE_HINTS):
-        return COLOR_WHITE
-    if any(hint in value for hint in RED_HINTS):
-        return COLOR_RED
-    if any(hint in value for hint in UNKNOWN_HINTS):
+    if compact.isdigit():
+        code = int(compact)
+        if code in (5, 8):
+            return COLOR_BLUE
+        if code in (6, 9):
+            return COLOR_WHITE
+        if code in (7, 10):
+            return COLOR_RED
         return COLOR_UNKNOWN
+
+    if any(token in compact for token in ["base", "ejp", "jour normal", "jour de pointe"]):
+        return COLOR_UNKNOWN
+
+    if "bleu" in compact or "blue" in compact:
+        # only explicit color labels are accepted in text mode
+        return COLOR_BLUE
+    if "blanc" in compact or "white" in compact:
+        return COLOR_WHITE
+    if "rouge" in compact or "red" in compact:
+        return COLOR_RED
 
     return COLOR_UNKNOWN
 

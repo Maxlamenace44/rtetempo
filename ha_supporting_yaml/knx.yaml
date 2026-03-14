@@ -1,0 +1,350 @@
+
+
+  switch:  
+    - name: "Circulation ECS"
+      address: "5/0/61"
+      state_address: "5/1/61"
+      
+    - name: "Chauffage ECS !! Ultime !!"
+      address: "5/0/71"
+      state_address: "5/1/71"
+      
+    - name: "Chauffage Bassin Piscine"
+      address: "5/0/72"
+      state_address: "5/1/72"      
+
+    - name: "Circulation Chauffage Bassin Piscine"
+      address: "5/0/66"
+      state_address: "5/1/66" 
+      
+    - name: "Circulation Chauffage Plancher Piscine"
+      address: "5/0/68"
+      state_address: "5/1/68" 
+      
+    - name: "ChRaf Maison"
+      address: "5/0/62"
+      state_address: "5/1/62" 
+      
+    - name: "ChRaf R+1"
+      address: "5/0/63"
+      state_address: "5/1/63" 
+      
+    - name: "ChRaf RDC"
+      address: "5/0/64"
+      state_address: "5/1/64"
+      
+      
+  light:
+
+
+  #### SAS ###
+    - name: "SAS"
+      address: "15/0/124"
+      state_address: "15/1/124"
+
+
+  #### Cuisine ###
+    - name: "Spot Ilots"
+      address: "15/0/127"
+      state_address: "15/1/127"
+      brightness_address: "15/4/127"
+      brightness_state_address: "15/5/127"
+
+    - name: "Suspension Ilots"
+      address: "15/0/125"
+      state_address: "15/1/125"
+      brightness_address: "15/4/125"
+      brightness_state_address: "15/5/125"
+
+
+    - name: "Spot Frigo"
+      address: "15/0/129"
+      state_address: "15/1/129"
+      brightness_address: "15/4/129"
+      brightness_state_address: "15/5/129"
+      
+      
+    - name: "Ext Sud"
+      address: "10/0/63"
+      state_address: "10/1/63"
+
+
+    - name: "Ext Nord"
+      address: "10/0/50"
+      state_address: "10/1/50"
+
+
+  sensor:
+  
+  
+    - name: "H% Etage"
+      state_address: "6/2/13"
+      type: humidity
+      sync_state: every 30
+
+    - name: "H% Local Tech"
+      state_address: "6/2/17"
+      type: humidity
+      sync_state: every 30
+
+    - name: "H% Buanderie"
+      state_address: "6/2/15"
+      type: humidity
+      sync_state: every 30
+
+    - name: "H% Piscine"
+      state_address: "6/2/11"
+      type: humidity
+      sync_state: every 30
+      
+    - name: "T°c RDC"
+      state_address: "6/1/24"
+      type: temperature
+      sync_state: every 30
+
+    - name: "T°c Etage"
+      state_address: "6/1/13"
+      type: temperature
+      sync_state: every 30
+
+    - name: "T°c Local Tech"
+      state_address: "6/1/17"
+      type: temperature
+      sync_state: every 30
+
+    - name: "T°c Buanderie"
+      state_address: "6/1/15"
+      type: temperature
+      sync_state: every 30
+
+    - name: "T°c Piscine"
+      state_address: "6/1/11"
+      type: temperature
+      sync_state: every 30
+      
+    # Tension (V)
+          
+    # EDF TIC
+    - name: "V EDF TIC"
+      state_address: "1/4/0"
+      type: electric_potential
+      device_class: voltage
+      state_class: measurement
+      sync_state: every 30
+    
+    
+    # Dshu Global
+    - name: "V Dshu Global"
+      state_address: "1/4/1"
+      type: electric_potential
+      device_class: voltage
+      state_class: measurement
+      sync_state: every 30
+    
+    
+    # Dshu Phase P1
+    - name: "V Dshu P1"
+      state_address: "1/4/2"
+      type: electric_potential
+      device_class: voltage
+      state_class: measurement
+      sync_state: every 30
+    
+    
+    # Dshu Phase P2
+    - name: "V Dshu P2"
+      state_address: "1/4/3"
+      type: electric_potential
+      device_class: voltage
+      state_class: measurement
+      sync_state: every 30
+    
+    
+    # DshuPhase P3
+    - name: "V Dshu P3"
+      state_address: "1/4/4"
+      type: electric_potential
+      device_class: voltage
+      state_class: measurement
+      sync_state: every 30
+      
+    # Puissance (kW)
+      
+    # EDF TIC Global
+    - name: "KW EDF TIC"
+      state_address: "1/1/0"
+      type: power
+      state_class: measurement
+      sync_state: init
+    
+    # Dshu Global
+    - name: "KW Dshu Global"
+      state_address: "1/1/1"
+      type: power
+      state_class: measurement
+      sync_state: init
+    
+    # Dshu Phase P1
+    - name: "KW General P1"
+      state_address: "1/1/2"
+      type: power
+      state_class: measurement
+      sync_state: init
+    
+    # Dshu Phase P2
+    - name: "KW Dshu P2"
+      state_address: "1/1/3"
+      type: power
+      state_class: measurement
+      sync_state: init
+    
+    # Dshu Phase P3
+    - name: "KW Dshu P3"
+      state_address: "1/1/4"
+      type: power
+      state_class: measurement
+      sync_state: init      
+
+#    # Energie (kWH)
+#          
+#    # EDF TIC
+#    - name: "KWh EDF TIC"
+#      state_address: "1/3/0"
+#      type: active_energy_wh
+#      device_class: energy
+#      state_class: total_increasing
+#      sync_state: init
+#    
+#    # Général Global
+#    - name: "KWh General Global"
+#      state_address: "1/3/1"
+#      type: active_energy_wh
+#      device_class: energy
+#      state_class: total_increasing
+#      sync_state: init
+#    
+#    # Général P1
+#    - name: "KWh General P1"
+#      state_address: "1/3/2"
+#      type: active_energy_wh
+#      device_class: energy
+#      state_class: total_increasing
+#      sync_state: init
+#    
+#    # Général P2
+#    - name: "KWh General P2"
+#      state_address: "1/3/3"
+#      type: active_energy_wh
+#      device_class: energy
+#      state_class: total_increasing
+#      sync_state: init
+#    
+#    # Général P3
+#    - name: "KWh General P3"
+#      state_address: "1/3/4"
+#      type: active_energy_wh
+#      device_class: energy
+#      state_class: total_increasing
+#      sync_state: init
+      
+
+
+    # Piscine - Tension
+    - name: "V Pool Global"
+      state_address: "1/4/5"
+      type: electric_potential
+      state_class: measurement
+      sync_state: every 30
+
+    - name: "V Pool P1"
+      state_address: "1/4/6"
+      type: electric_potential
+      state_class: measurement
+      sync_state: every 30
+
+    - name: "V Pool P2"
+      state_address: "1/4/7"
+      type: electric_potential
+      state_class: measurement
+      sync_state: every 30
+
+    - name: "V Pool P3"
+      state_address: "1/4/8"
+      type: electric_potential
+      state_class: measurement
+      sync_state: every 30
+
+    # Piscine - Puissance
+    - name: "KW Pool Global"
+      state_address: "1/1/5"
+      type: power
+      state_class: measurement
+      sync_state: init
+
+    - name: "KW Pool P1"
+      state_address: "1/1/6"
+      type: power
+      state_class: measurement
+      sync_state: init
+
+    - name: "KW Pool P2"
+      state_address: "1/1/7"
+      type: power
+      state_class: measurement
+      sync_state: init
+
+    - name: "KW Pool P3"
+      state_address: "1/1/8"
+      type: power
+      state_class: measurement
+      sync_state: init
+
+    # Chauffage - Tension
+    - name: "V Heat Global"
+      state_address: "1/4/9"
+      type: electric_potential
+      state_class: measurement
+      sync_state: every 30
+
+    - name: "V Heat P1"
+      state_address: "1/4/10"
+      type: electric_potential
+      state_class: measurement
+      sync_state: every 30
+
+    - name: "V Heat P2"
+      state_address: "1/4/11"
+      type: electric_potential
+      state_class: measurement
+      sync_state: every 30
+
+    - name: "V Heat P3"
+      state_address: "1/4/12"
+      type: electric_potential
+      state_class: measurement
+      sync_state: every 30
+
+    # Chauffage - Puissance
+    - name: "KW Heat Global"
+      state_address: "1/1/9"
+      type: power
+      state_class: measurement
+      sync_state: init
+
+    - name: "KW Heat P1"
+      state_address: "1/1/10"
+      type: power
+      state_class: measurement
+      sync_state: init
+
+    - name: "KW Heat P2"
+      state_address: "1/1/11"
+      type: power
+      state_class: measurement
+      sync_state: init
+
+    - name: "KW Heat P3"
+      state_address: "1/1/12"
+      type: power
+      state_class: measurement
+      sync_state: init      

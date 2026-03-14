@@ -30,10 +30,10 @@
                     "forecast_enabled": "Activer les prévisions Open DPE",
                     "source_mode": "Mode source configuré",
                     "fallback_strategy": "Stratégie de repli",
-                    "default_today_color": "Couleur par défaut aujourd'hui",
-                    "default_tomorrow_color": "Couleur par défaut demain",
-                    "local_today_entity": "Entité locale aujourd'hui",
-                    "local_tomorrow_entity": "Entité locale demain"
+                    "default_today_color": "Couleur par défaut actuelle",
+                    "default_tomorrow_color": "Couleur par défaut prochaine",
+                    "local_today_entity": "Entité locale actuelle",
+                    "local_tomorrow_entity": "Entité locale prochaine"
                 },
                 "title": "RTE Tempo - Options"
             }

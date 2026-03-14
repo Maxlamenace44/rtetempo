@@ -30,10 +30,10 @@
                     "forecast_enabled": "Enable Open DPE forecasts",
                     "source_mode": "Configured source mode",
                     "fallback_strategy": "Fallback strategy",
-                    "default_today_color": "Default color for today",
-                    "default_tomorrow_color": "Default color for tomorrow",
-                    "local_today_entity": "Local entity for today",
-                    "local_tomorrow_entity": "Local entity for tomorrow"
+                    "default_today_color": "Default current color",
+                    "default_tomorrow_color": "Default next color",
+                    "local_today_entity": "Local current entity",
+                    "local_tomorrow_entity": "Local next entity"
                 },
                 "title": "RTE Tempo - Options"
             }

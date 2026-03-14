@@ -65,12 +65,10 @@ class TempoSourceModeSelect(SelectEntity):
         self._attr_extra_state_attributes = {
             "configured_mode": self._service.get_configured_source_mode(),
             "runtime_override_mode": self._service.runtime_source_mode,
-            "note": "Sélecteur de test non destructif ; reset pour revenir à la configuration sauvegardée",
+            "override_active": self._service.runtime_source_mode is not None,
         }
 
     async def async_select_option(self, option: str) -> None:
         if option not in self._attr_options:
-            raise ValueError(f"Invalid option: {option}")
+            return
         self._service.set_runtime_source_mode(option)
-        self._attr_current_option = option
-        self.async_write_ha_state()
