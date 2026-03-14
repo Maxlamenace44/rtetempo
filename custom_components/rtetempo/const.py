@@ -9,6 +9,7 @@ DOMAIN = "rtetempo"
 CONFIG_CLIENT_ID = "client_id"
 CONFIG_CLIEND_SECRET = "client_secret"
 OPTION_ADJUSTED_DAYS = "adjusted_days"
+OPTION_FORECAST_ENABLED = "forecast_enabled"
 
 
 # Service Device
@@ -66,3 +67,35 @@ CYCLE_START_DAY = 1
 CONFIRM_HOUR = 10
 CONFIRM_MIN = 40
 CONFIRM_CHECK = 11
+
+
+# Resilience / source strategy
+
+OPTION_SOURCE_MODE = "source_mode"
+OPTION_FALLBACK_STRATEGY = "fallback_strategy"
+OPTION_DEFAULT_TODAY_COLOR = "default_today_color"
+OPTION_DEFAULT_TOMORROW_COLOR = "default_tomorrow_color"
+
+OPTION_LOCAL_TODAY_ENTITY = "local_today_entity"
+OPTION_LOCAL_TOMORROW_ENTITY = "local_tomorrow_entity"
+OPTION_LOCAL_HCHP_ENTITY = "local_hchp_entity"
+
+SOURCE_MODE_WEB = "web"
+SOURCE_MODE_LOCAL = "local"
+SOURCE_MODE_AUTO = "auto"
+SOURCE_MODE_COMPARE = "compare"
+
+FALLBACK_LAST_GOOD = "last_good"
+FALLBACK_DEFAULT = "default"
+FALLBACK_UNKNOWN = "unknown"
+
+RESOLVER_SOURCE_RTE = "rte"
+RESOLVER_SOURCE_LOCAL = "local"
+RESOLVER_SOURCE_DEFAULT = "default"
+RESOLVER_SOURCE_FORECAST = "forecast"
+
+COLOR_BLUE = "blue"
+COLOR_WHITE = "white"
+COLOR_RED = "red"
+COLOR_UNKNOWN = "unknown"
+
