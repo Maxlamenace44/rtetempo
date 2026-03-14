@@ -6,7 +6,12 @@ from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import DeviceInfo
 
-from .const import DEVICE_MANUFACTURER, DEVICE_MODEL, DEVICE_NAME, DOMAIN
+from .const import (
+    DEVICE_MANUFACTURER,
+    DEVICE_MODEL_RESILIENCE,
+    DEVICE_NAME_RESILIENCE,
+    DOMAIN,
+)
 from .resilience_service import TempoResilienceService
 
 
@@ -40,10 +45,10 @@ class _BaseResilienceSensor(SensorEntity):
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, self._config_id)},
-            name=DEVICE_NAME,
+            identifiers={(DOMAIN, f"{self._config_id}_resilience")},
+            name=DEVICE_NAME_RESILIENCE,
             manufacturer=DEVICE_MANUFACTURER,
-            model=DEVICE_MODEL,
+            model=DEVICE_MODEL_RESILIENCE,
         )
 
     async def async_added_to_hass(self) -> None:

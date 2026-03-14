@@ -10,8 +10,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     DEVICE_MANUFACTURER,
-    DEVICE_MODEL,
-    DEVICE_NAME,
+    DEVICE_MODEL_RESILIENCE,
+    DEVICE_NAME_RESILIENCE,
     DOMAIN,
     RUNTIME_SOURCE_MODE_OPTIONS,
     SOURCE_MODE_AUTO,
@@ -53,10 +53,10 @@ class TempoSourceModeSelect(SelectEntity):
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, self._config_id)},
-            name=DEVICE_NAME,
+            identifiers={(DOMAIN, f"{self._config_id}_resilience")},
+            name=DEVICE_NAME_RESILIENCE,
             manufacturer=DEVICE_MANUFACTURER,
-            model=DEVICE_MODEL,
+            model=DEVICE_MODEL_RESILIENCE,
         )
 
     def update(self) -> None:

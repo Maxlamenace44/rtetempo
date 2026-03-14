@@ -53,7 +53,7 @@ API_VALUE_RED = "RED"
 API_VALUE_WHITE = "WHITE"
 API_VALUE_BLUE = "BLUE"
 API_ATTRIBUTION = "Données fournies par data.rte-france.com"
-USER_AGENT = "github.com/hekmon/rtetempo v1.6.3"
+USER_AGENT = "github.com/hekmon/rtetempo v1.6.4"
 
 
 # Tempo def
@@ -132,3 +132,6 @@ DEFAULT_COLOR_OPTIONS = [
     COLOR_WHITE,
     COLOR_RED,
 ]
+
+DEVICE_NAME_RESILIENCE = "RTE Tempo Resilience"
+DEVICE_MODEL_RESILIENCE = "Tempo Resilience Engine"

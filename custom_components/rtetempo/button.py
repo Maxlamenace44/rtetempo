@@ -8,7 +8,12 @@ from homeassistant.helpers.device_registry import DeviceEntryType
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DEVICE_MANUFACTURER, DEVICE_MODEL, DEVICE_NAME, DOMAIN
+from .const import (
+    DEVICE_MANUFACTURER,
+    DEVICE_MODEL_RESILIENCE,
+    DEVICE_NAME_RESILIENCE,
+    DOMAIN,
+)
 from .resilience_service import TempoResilienceService
 
 
@@ -43,10 +48,10 @@ class TempoResolverResetButton(ButtonEntity):
     def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             entry_type=DeviceEntryType.SERVICE,
-            identifiers={(DOMAIN, self._config_id)},
-            name=DEVICE_NAME,
+            identifiers={(DOMAIN, f"{self._config_id}_resilience")},
+            name=DEVICE_NAME_RESILIENCE,
             manufacturer=DEVICE_MANUFACTURER,
-            model=DEVICE_MODEL,
+            model=DEVICE_MODEL_RESILIENCE,
         )
 
     async def async_press(self) -> None:
