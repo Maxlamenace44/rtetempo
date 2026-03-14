@@ -49,6 +49,9 @@ from .forecast_coordinator import ForecastCoordinator
 from .sensor_forecast import OpenDPEForecastSensor
 from .sensor_accuracy import TempoAccuracySensor
 from .sensor_resilience import (
+    ResilienceConsistencySensor,
+    ResilienceLastUpdateSensor,
+    ResilienceModeSensor,
     ResilienceTodayResolvedSensor,
     ResilienceTodaySourceSensor,
     ResilienceTomorrowResolvedSensor,
@@ -99,6 +102,9 @@ async def async_setup_entry(
                 ResilienceTodaySourceSensor(config_entry.entry_id, resilience_service),
                 ResilienceTomorrowResolvedSensor(config_entry.entry_id, resilience_service),
                 ResilienceTomorrowSourceSensor(config_entry.entry_id, resilience_service),
+                ResilienceModeSensor(config_entry.entry_id, resilience_service),
+                ResilienceConsistencySensor(config_entry.entry_id, resilience_service),
+                ResilienceLastUpdateSensor(config_entry.entry_id, resilience_service),
             ]
         )
 
